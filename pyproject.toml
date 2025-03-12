@@ -1,10 +1,13 @@
 [project]
 name = "py-uv"
 version = "0.1.0"
-description = "Add your description here"
+description = "Web Chess Game"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "fastapi>=0.104.1",
+    "uvicorn>=0.24.0",
+    "websockets>=12.0",
+    "jinja2>=3.1.2",
     "pygame>=2.6.1",
-    "pyserial>=3.5",
 ]

@@ -1,0 +1,51 @@
+.chess-board {
+    margin: 20px auto;
+    width: 800px;
+    height: 800px;
+    border: 2px solid #333;
+}
+
+.chess-row {
+    display: flex;
+    height: 12.5%;
+}
+
+.chess-cell {
+    width: 12.5%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 40px;
+    font-weight: bold;  /* 添加粗体 */
+    cursor: pointer;
+}
+
+.cell-white {
+    background-color: rgb(255, 206, 158);  /* 浅棕色 */
+}
+
+.cell-black {
+    background-color: rgb(209, 139, 71);   /* 深棕色 */
+}
+
+.cell-selected {
+    background-color: #baca44 !important;
+}
+
+.cell-valid-move {
+    background-color: #baba44 !important;
+}
+
+.game-info {
+    text-align: center;
+    margin: 20px;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px;
+}
+
+.timer {
+    font-size: 24px;
+    flex: 1;
+}
