@@ -5,8 +5,8 @@ from chess_ui import ChessUI
 def main():
     # 初始化Pygame
     pygame.init()
-    # 修改窗口高度，增加顶部空间用于显示时间
-    screen = pygame.display.set_mode((800, 900))  # 高度从800改为900
+    # 修改为合适的窗口大小
+    screen = pygame.display.set_mode((400, 450))  # 改回原来的高度
     # 设置窗口标题
     pygame.display.set_caption("国际象棋")
 

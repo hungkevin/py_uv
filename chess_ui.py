@@ -7,8 +7,8 @@ class ChessUI:
         self.screen = screen
         self.board = board
         # 棋盘在窗口中的起始位置，为时间显示留出空间
-        self.board_start_y = 100  # 棋盘向下移动100像素
-        self.square_size = 100    # 每个格子的大小
+        self.board_start_y = 50  # 修改顶部空间
+        self.square_size = 50    # 从100改为50，缩小格子大小
         # 当前选中的棋子
         self.selected_piece = None
         # 当前选中的格子位置
@@ -26,11 +26,11 @@ class ChessUI:
                 'bishop': '相', 'knight': '马', 'pawn': '兵'
             }
         }
-        self.font = pygame.font.SysFont('SimHei', 50)
+        self.font = pygame.font.SysFont('SimHei', 28)  # 从50改为28
         self.game_over = False
         self.winner = None
-        self.font_large = pygame.font.SysFont('SimHei', 72)
-        self.timer_font = pygame.font.Font(None, 48)  # 使用默认字体显示时间
+        self.font_large = pygame.font.SysFont('SimHei', 30)  # 从36改为30
+        self.timer_font = pygame.font.Font(None, 24)  # 从48改为24
 
         # 添加计时相关的属性
         self.white_time = 0  # 白方用时（秒）
@@ -73,16 +73,16 @@ class ChessUI:
         white_text = f"WHITE: {self.format_time(self.white_time)}"
         white_surface = self.timer_font.render(white_text, True, (255, 255, 255))
         white_rect = white_surface.get_rect()
-        white_rect.left = 20
-        white_rect.top = 30
+        white_rect.left = 10  # 调整左边距
+        white_rect.top = 10   # 调整上边距
         self.screen.blit(white_surface, white_rect)
 
         # 黑方时间（右侧）
         black_text = f"BLACK: {self.format_time(self.black_time)}"
         black_surface = self.timer_font.render(black_text, True, (0, 0, 0))
         black_rect = black_surface.get_rect()
-        black_rect.right = 780  # 800 - 20
-        black_rect.top = 30
+        black_rect.right = 390  # 调整到窗口宽度(400)减去边距(10)
+        black_rect.top = 10     # 与白方计时器对齐
         self.screen.blit(black_surface, black_rect)
 
         # 绘制棋盘和棋子
@@ -104,7 +104,18 @@ class ChessUI:
                 piece = self.board.board[row][col]
                 if piece:
                     text_color = (255, 255, 255) if piece.color == 'white' else (0, 0, 0)
+                    shadow_color = (128, 128, 128)  # 灰色阴影
                     text = self.piece_names[piece.color][piece.type]
+
+                    # 绘制阴影文字
+                    shadow_surface = self.font.render(text, True, shadow_color)
+                    shadow_rect = shadow_surface.get_rect(center=(
+                        rect.x + self.square_size // 2 + 2,  # 阴影偏移2像素
+                        rect.y + self.square_size // 2 + 2
+                    ))
+                    self.screen.blit(shadow_surface, shadow_rect)
+
+                    # 绘制主要文字
                     text_surface = self.font.render(text, True, text_color)
                     text_rect = text_surface.get_rect(center=(
                         rect.x + self.square_size // 2,
@@ -114,22 +125,22 @@ class ChessUI:
 
         # 如果游戏结束，显示胜利信息
         if self.game_over:
-            # 创建半透明的遮罩，覆盖整个窗口（包括计时器区域）
-            overlay = pygame.Surface((800, 900))  # 修改遮罩大小为整个窗口大小
+            # 创建半透明的遮罩，覆盖整个窗口
+            overlay = pygame.Surface((400, 450))  # 修改遮罩大小为当前窗口大小
             overlay.fill((0, 0, 0))
             overlay.set_alpha(128)
             self.screen.blit(overlay, (0, 0))
 
-            # 显示胜利信息，位置下移以适应新的布局
+            # 显示胜利信息的位置调整
             winner_text = f"{'白方' if self.winner == 'white' else '黑方'}胜利!"
             text_surface = self.font_large.render(winner_text, True, (255, 215, 0))
-            text_rect = text_surface.get_rect(center=(400, 400))  # 垂直位置调整
+            text_rect = text_surface.get_rect(center=(200, 200))  # 调整到窗口中心
             self.screen.blit(text_surface, text_rect)
 
-            # 显示重新开始提示，位置下移以适应新的布局
+            # 显示重新开始提示的位置调整
             restart_text = "点击任意位置开始新局"
             restart_surface = self.font.render(restart_text, True, (255, 255, 255))
-            restart_rect = restart_surface.get_rect(center=(400, 500))  # 垂直位置调整
+            restart_rect = restart_surface.get_rect(center=(200, 250))  # 调整位置
             self.screen.blit(restart_surface, restart_rect)
 
     def handle_event(self, event):

@@ -1,7 +1,7 @@
 .chess-board {
     margin: 20px auto;
-    width: 800px;
-    height: 800px;
+    width: 400px;     /* 从800px改为400px */
+    height: 400px;    /* 从800px改为400px */
     border: 2px solid #333;
 }
 
@@ -16,9 +16,10 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 40px;
-    font-weight: bold;  /* 添加粗体 */
+    font-size: 28px;  /* 从20px改为28px，增加棋子文字大小 */
+    font-weight: bold;
     cursor: pointer;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);  /* 添加文字阴影 */
 }
 
 .cell-white {
@@ -39,13 +40,25 @@
 
 .game-info {
     text-align: center;
-    margin: 20px;
+    margin: 10px auto;
     display: flex;
     justify-content: space-between;
-    padding: 0 20px;
+    width: 400px;  /* 与棋盘宽度一致 */
 }
 
 .timer {
-    font-size: 24px;
-    flex: 1;
+    font-size: 18px;
+    padding: 5px 10px;
+}
+
+.white-timer {
+    color: #fff;
+    background-color: #333;
+    border-radius: 4px;
+}
+
+.black-timer {
+    color: #000;
+    background-color: #eee;
+    border-radius: 4px;
 }
