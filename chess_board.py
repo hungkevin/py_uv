@@ -14,6 +14,7 @@ class ChessBoard:
         self.current_player = 'white'
         # 初始化棋盘布局
         self.initialize_board()
+        self.is_white_turn = True  # 添加此行，表示当前是否为白方回合
 
     def initialize_board(self):
         """初始化棋盘，放置所有棋子的起始位置"""
@@ -165,6 +166,7 @@ class ChessBoard:
         self.board = [[None for _ in range(8)] for _ in range(8)]
         self.current_player = 'white'
         self.initialize_board()
+        self.is_white_turn = True  # 重置游戏时重置为白方回合
 
     def move_piece(self, from_pos, to_pos):
         """
@@ -179,5 +181,6 @@ class ChessBoard:
             self.board[from_pos[0]][from_pos[1]] = None
             piece.has_moved = True
             self.current_player = 'black' if self.current_player == 'white' else 'white'
+            self.is_white_turn = not self.is_white_turn  # 移动成功后切换回合
             return True
         return False
