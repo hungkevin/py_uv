@@ -3,6 +3,7 @@
 <head>
     <title>网页版国际象棋</title>
     <link rel="stylesheet" href="/static/css/chess.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 </head>
 <body>
     <div class="game-info">
@@ -67,7 +68,12 @@
                     cell.className = `chess-cell ${(i + j) % 2 === 0 ? 'cell-white' : 'cell-black'}`;
                     cell.dataset.row = i;
                     cell.dataset.col = j;
+
+                    // 为所有设备添加统一的事件处理
                     cell.addEventListener('click', handleCellClick);
+                    cell.addEventListener('touchstart', handleTouchStart, { passive: false });
+                    cell.addEventListener('touchmove', handleTouchMove, { passive: false });
+                    cell.addEventListener('touchend', handleTouchEnd, { passive: false });
 
                     // 设置初始棋子
                     if (i in initialBoard) {
@@ -97,24 +103,74 @@
             timerInterval = setInterval(updateTimer, 1000);
         }
 
+        // 修改触摸处理函数
+        let touchStartCell = null;
+        let lastTouchTime = 0;
+        let hasMoved = false;
+
+        function handleTouchStart(e) {
+            e.preventDefault();
+            const cell = e.target;
+            touchStartCell = cell;
+            lastTouchTime = Date.now();
+            hasMoved = false;
+
+            log(`触摸开始: 格子(${cell.dataset.row}, ${cell.dataset.col})`);
+        }
+
+        function handleTouchMove(e) {
+            e.preventDefault();
+            hasMoved = true;
+        }
+
+        function handleTouchEnd(e) {
+            e.preventDefault();
+            if (!touchStartCell) return;
+
+            const touchEndTime = Date.now();
+            const cell = touchStartCell;
+
+            log(`触摸结束: 格子(${cell.dataset.row}, ${cell.dataset.col}), 移动=${hasMoved}, 时长=${touchEndTime - lastTouchTime}ms`);
+
+            // 如果触摸时间短且没有移动，视为点击
+            if (!hasMoved && (touchEndTime - lastTouchTime) < 300) {
+                // 创建一个新的点击事件
+                const clickEvent = {
+                    target: cell,
+                    type: 'touch',
+                    preventDefault: () => {}
+                };
+
+                log(`处理为点击: 格子(${cell.dataset.row}, ${cell.dataset.col})`);
+                handleCellClick(clickEvent);
+            }
+
+            touchStartCell = null;
+        }
+
+        // 修改handleCellClick，使其更清晰地处理两次点击逻辑
         function handleCellClick(e) {
             const cell = e.target;
             const row = parseInt(cell.dataset.row);
             const col = parseInt(cell.dataset.col);
 
-            // 如果点击的是新棋子，并且是当前玩家的棋子
-            if (cell.textContent && ((currentPlayer === 'white' && cell.style.color === 'rgb(255, 255, 255)') ||
-                      (currentPlayer === 'black' && cell.style.color === 'rgb(0, 0, 0)'))) {
-                // 清除之前的选择和高亮
-                clearSelection();
-                // 选择新棋子
-                selectedCell = cell;
-                cell.classList.add('cell-selected');
-                showValidMoves(row, col);
+            log(`Click/Touch on cell: (${row}, ${col})`);
+
+            // 第一次点击：选择棋子
+            if (!selectedCell) {
+                if (cell.textContent && ((currentPlayer === 'white' && cell.style.color === 'rgb(255, 255, 255)') ||
+                                        (currentPlayer === 'black' && cell.style.color === 'rgb(0, 0, 0)'))) {
+                    log(`Selected piece: ${cell.textContent} at (${row}, ${col})`);
+                    clearSelection();
+                    selectedCell = cell;
+                    cell.classList.add('cell-selected');
+                    showValidMoves(row, col);
+                }
             }
-            // 如果已经选中了棋子，尝试移动
-            else if (selectedCell) {
+            // 第二次点击：移动棋子
+            else {
                 if (validMoves.some(move => move.row === row && move.col === col)) {
+                    log(`Moving piece from (${selectedCell.dataset.row}, ${selectedCell.dataset.col}) to (${row}, ${col})`);
                     ws.send(JSON.stringify({
                         type: 'move',
                         from: [parseInt(selectedCell.dataset.row), parseInt(selectedCell.dataset.col)],
@@ -295,9 +351,19 @@
             validMoves = [];
         }
 
+        // 辅助函数
+        function isCurrentPlayersPiece(cell) {
+            return cell.textContent && (
+                (currentPlayer === 'white' && cell.style.color === 'rgb(255, 255, 255)') ||
+                (currentPlayer === 'black' && cell.style.color === 'rgb(0, 0, 0)')
+            );
+        }
+
         // WebSocket消息处理
         ws.onmessage = function(event) {
             const data = JSON.parse(event.data);
+            log(`Received WebSocket message: ${JSON.stringify(data)}`);
+
             if (data.type === 'move') {
                 handleMove(data);
             } else if (data.type === 'game_over') {
@@ -331,6 +397,61 @@
 
         // 初始化游戏
         initBoard();
+
+        // 添加日志函数
+        function log(message) {
+            console.log(`[${new Date().toISOString()}] ${message}`);
+            // 发送日志到服务器
+            ws.send(JSON.stringify({
+                type: 'log',
+                message: message
+            }));
+
+            // 更新界面日志显示
+            let logDiv = document.getElementById('logDiv');
+            if (!logDiv) {
+                logDiv = document.createElement('div');
+                logDiv.id = 'logDiv';
+                logDiv.style.cssText = 'position:fixed; left:0; bottom:0; width:100%; height:100px; overflow:auto; background:rgba(0,0,0,0.7); color:white; font-size:12px; padding:5px; display:none;';
+                document.body.appendChild(logDiv);
+            }
+            logDiv.innerHTML = message + '<br>' + logDiv.innerHTML;
+        }
+
+        // 添加调试开关
+        let debugMode = false;
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'D' && e.ctrlKey) {
+                debugMode = !debugMode;
+                document.getElementById('logDiv').style.display = debugMode ? 'block' : 'none';
+                log('Debug mode: ' + (debugMode ? 'ON' : 'OFF'));
+            }
+        });
+
+        // 添加CSS样式
+        const style = document.createElement('style');
+        style.textContent = `
+            .chess-cell {
+                touch-action: none;
+                user-select: none;
+                -webkit-user-select: none;
+                -webkit-touch-callout: none;
+            }
+            .cell-selected {
+                background-color: rgba(255, 255, 0, 0.5) !important;
+            }
+            .cell-valid-move {
+                background-color: rgba(0, 255, 0, 0.3) !important;
+            }
+            .cell-hover {
+                background-color: rgba(0, 0, 255, 0.3) !important;
+            }
+            #logDiv {
+                z-index: 1000;
+                font-family: monospace;
+            }
+        `;
+        document.head.appendChild(style);
     </script>
 </body>
 </html>

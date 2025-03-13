@@ -38,6 +38,11 @@ class ChessUI:
         self.last_time = time.time()  # 上次更新时间
         self.game_active = True  # 游戏是否进行中
 
+        # 添加颜色常量
+        self.SELECTED_COLOR = (255, 255, 0, 128)  # 黄色，半透明
+        self.VALID_MOVE_COLOR = (0, 255, 0, 76)   # 绿色，半透明
+        self.selected_piece = None
+
     def load_images(self):
         """加载棋子图片（预留功能）"""
         self.pieces_images = {}
@@ -123,6 +128,23 @@ class ChessUI:
                     ))
                     self.screen.blit(text_surface, text_rect)
 
+        # 在绘制棋子之前，添加选中和移动提示的绘制
+        if self.selected_piece:
+            row, col = self.selected_piece
+            # 绘制选中效果
+            s = pygame.Surface((self.square_size, self.square_size))
+            s.set_alpha(128)
+            s.fill(self.SELECTED_COLOR)
+            self.screen.blit(s, (col * self.square_size, row * self.square_size + self.board_start_y))
+
+            # 绘制可移动位置
+            valid_moves = self.board.get_valid_moves(row, col)
+            for move in valid_moves:
+                s = pygame.Surface((self.square_size, self.square_size))
+                s.set_alpha(76)
+                s.fill(self.VALID_MOVE_COLOR)
+                self.screen.blit(s, (move[1] * self.square_size, move[0] * self.square_size + self.board_start_y))
+
         # 如果游戏结束，显示胜利信息
         if self.game_over:
             # 创建半透明的遮罩，覆盖整个窗口
@@ -163,36 +185,28 @@ class ChessUI:
                 return
             row, col = board_pos
 
-            # 如果已经选中了一个棋子
-            if self.selected_square:
-                from_pos = self.selected_square
-                to_pos = (row, col)
-
-                # 获取目标位置的棋子（如果有的话）
-                target_piece = self.board.board[row][col]
-
-                # 尝试移动棋子
-                if self.board.move_piece(from_pos, to_pos):
-                    # 立即检查是否吃掉了国王
-                    if target_piece and target_piece.type == 'king':
-                        self.game_over = True
-                        self.winner = self.board.board[row][col].color
-                        self.game_active = False
-                    # 如果没有吃掉国王，则检查将军状态
-                    elif self.board.is_king_in_check(self.board.current_player):
-                        print(f"警告：{self.board.current_player}方国王正在被将军！")
-
-                # 无论移动是否成功，都清除选中状态
-                self.selected_square = None
-                self.valid_moves = []
-
-            # 选择新的棋子
-            else:
+            if self.selected_piece is None:
+                # 直接使用board数组访问棋子
                 piece = self.board.board[row][col]
                 if piece and piece.color == self.board.current_player:
-                    self.selected_square = (row, col)
-                    # 计算所有可能的移动位置
-                    self.valid_moves = self.calculate_valid_moves(row, col)
+                    self.selected_piece = (row, col)
+            else:
+                # 移动棋子
+                from_row, from_col = self.selected_piece
+                if self.board.move_piece((from_row, from_col), (row, col)):
+                    # 检查是否吃掉国王
+                    if self.board.is_king_captured(self.board.current_player):
+                        self.game_over = True
+                        self.winner = 'white' if self.board.current_player == 'black' else 'black'
+                        self.game_active = False
+                    self.selected_piece = None
+                else:
+                    # 如果移动失败，检查是否选择新棋子
+                    piece = self.board.board[row][col]
+                    if piece and piece.color == self.board.current_player:
+                        self.selected_piece = (row, col)
+                    else:
+                        self.selected_piece = None
 
     def calculate_valid_moves(self, row, col):
         """

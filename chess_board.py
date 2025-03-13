@@ -184,3 +184,28 @@ class ChessBoard:
             self.is_white_turn = not self.is_white_turn  # 移动成功后切换回合
             return True
         return False
+
+    def get_piece(self, row, col):
+        """
+        获取指定位置的棋子
+        row: 行号 (0-7)
+        col: 列号 (0-7)
+        返回: Piece对象或None
+        """
+        if 0 <= row < 8 and 0 <= col < 8:
+            return self.board[row][col]
+        return None
+
+    def get_valid_moves(self, row, col):
+        """
+        获取指定位置棋子的所有合法移动位置
+        row: 行号
+        col: 列号
+        返回: 所有可能的移动位置列表 [(row, col), ...]
+        """
+        valid_moves = []
+        for to_row in range(8):
+            for to_col in range(8):
+                if self.is_valid_move((row, col), (to_row, to_col)):
+                    valid_moves.append((to_row, to_col))
+        return valid_moves
